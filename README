@@ -1,0 +1,93 @@
+Partners:
+    Violet McCabe and Phila Dlamini
+    vmccab01 and pdlami01
+
+Help Received:
+    We received help from the TA's throughout the course of this assignment.
+
+What's been correctly implemented:
+    We believe everything has been correctly implemented 
+
+Significant departures from our design: 
+    None
+
+Architecture:
+
+1.  um_reader
+    - Handles reading the provided UM instructions into segment 0
+
+2.  unpack
+    - Handles unpacking UM instructions. 
+    - This program retrives the opcode and registers rA, rB, rC from the 32 
+    bit word and stores their values in an Instruction struct 
+
+3. execute
+    - Handles executing a given UM instruction 
+
+4. um
+    - The entry point of our program. 
+    - This module is responsible for opening the um file provided,
+    - calling um_reader, and execute. 
+    
+
+How long it takes to implement 50 million instructions:
+    8.032u 0.194s 0:08.23 99.8%
+    We created a dummy .um file with 50 million instructions and this is how
+    long it took to run. the instructions were extremely simple so a more 
+    complex program would take far longer than this to run.
+
+Unit tests:
+1.  add.um
+    - Tests the add instruction for functional correctness
+    - Peforms multiple sums and stores the restult in registers
+
+2. bnand.um
+    - Tests the nand instruction for functional correctness
+    - nands a few values and stores the result in registers
+
+3. cmov.um
+    - Tests the cmov instruction for functional correctness
+    - Tests when the rC != 0 condition is satisfied and when it is not satisfied
+
+4. div.um
+    - Tests the div instruction for functional correctness
+    - Performs multiple division and stores the result in registers
+
+5. equal.um
+    - Reads in two characters from standard input and checks if they are equal
+    - If the two characters are equal, the program prints "_ equals _", where 
+    "_" is character read in
+    - If the characters are not equal, "_ not equals _" is printed. 
+    - This program makes use of the bnand, load program, and output 
+    - instructions 
+    equal.0 contains the input required for equal.um. 
+    equal.1 contains the output that equal.um is expected to write
+
+6. fact.um
+    - Computes the factorial of 5 and prints the result
+    - 5! = 120, which is the ASCII value for the character "x". Hence, "x" is 
+    printed out
+    fact.1 contains the output that fact.um is expected to write
+
+7. load_p.um
+    - Tests the load program instruction for functional correctness
+    - We test loading a program that prints the character "h" into segment 0
+    and execute this program  
+    - The expected output from running this file is therefore "h"
+    - This program uses the bnand, mult, sstore, and load program instructions
+    to achive this 
+    load_p.1 contains the output that fact.um is expected to write
+
+8. mapping.um
+    - Tests the map and unmap instructions for functional correctness
+    - We test to ensure that unmapped segment identifiers are re-used in
+    - subsequent calls to map
+
+9. mult.um
+    - Tests the mult instruction for functional correctness
+    - Multiplies a few values and puts the result in registers
+
+Hours spent: 19 hours total
+    Analyzing: 2 hours
+    Preparing: 2 hours
+    Solving: 15 hours
