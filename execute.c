@@ -1,10 +1,10 @@
 /*
 *                       execute.c
 *
-*   
+*
 *   Summary: execute.c is the implementation for execute.h. it holds all the
 *            individual functinos for all the opcodes. execute is responsible
-*            for iterating through segment 0, unpacking, and executing the 
+*            for iterating through segment 0, unpacking, and executing the
 *            instructions.
 *
 *   Authors: vmccab01 and pdlami01
@@ -195,8 +195,8 @@ void nand(uint32_t *rA, uint32_t rB, uint32_t rC)
 *        and rB is expected to be a valid non null address.
 * Output: N/A - no return value
 * Side Effects: The sequence of segments is permanently updated and register
-*               rB is updated by reference. 
-* Error Conditions: CRE if new_id is 0, CRE if no space available for 
+*               rB is updated by reference.
+* Error Conditions: CRE if new_id is 0, CRE if no space available for
 *                  Sequence'new_map', CRE if rB is null.
 */
 void map(uint32_t new_id, Seq_T segments, uint32_t *rB, uint32_t rC)
@@ -225,8 +225,8 @@ void map(uint32_t new_id, Seq_T segments, uint32_t *rB, uint32_t rC)
 /*
 * Name: unmap
 * Summary: unmap frees the segment with identifier rC from the sequence
-*          of segments. the identifier rC is added to the sequence of 
-*          identifiers that can be reused. 
+*          of segments. the identifier rC is added to the sequence of
+*          identifiers that can be reused.
 * Input: ids is the sequence of reusable segment ids, segments is the sequence
 *        of segments, and rC is the value at register rC. ids and segments are
 *        expected to be non null and rC is expected to be a non zero value.
@@ -256,14 +256,14 @@ void unmap(Seq_T ids, Seq_T segments, uint32_t rC)
 /*
 * Name: sload
 * Summary: sload is the function for the segmented load opcode. sload sets
-*          the value at register rA equal to the value at segment with  
+*          the value at register rA equal to the value at segment with
 *          identifier rB at index rC.
 * Input: segments is the sequence of segments, rA is the address of register
 *        rA, rB is the value in register rB, and rC is the value in register
 *        rC. segments is expected to be non null and rA is expected to be a
-*        valid non null adress. 
+*        valid non null adress.
 * Output: N/A
-* Side Effects: register rA is updated by reference. 
+* Side Effects: register rA is updated by reference.
 * Error Conditions: CRE if segments is null, CRE if rA is null.
 */
 
@@ -278,7 +278,7 @@ void sload(Seq_T segments, uint32_t *rA, uint32_t rB, uint32_t rC)
 /*
 * Name: sstore
 * Summary: sstore is the function for the segmented store opcode. sstore stores
-*          the value from register rA into the segment with identifier rB at 
+*          the value from register rA into the segment with identifier rB at
 *          index rC.
 * Input: segments is the sequence of segments, rA is the value at register rA,
 *        rB is the value at register rB, and rC is the value at register rC.
@@ -296,20 +296,20 @@ void sstore(Seq_T segments, uint32_t rA, uint32_t rB, uint32_t rC)
 /*
 * Name: loadp
 * Summary: loadp duplicates the desired segment, frees the existing segment 0,
-*          and loads the duplicated segment into segment 0. rB is the 
+*          and loads the duplicated segment into segment 0. rB is the
 *          identifier of the segment the user wants to duplicate.
 * Input: segments is the sequence of segments, rB is the value at register rB.
 * Output: N/A.
 * Side Effects: memory of existing segment 0 is freed, segments is updated to
 *               have the duplicated segment at index 0 (new segment 0)
-* Error Conditions: CRE if segments is null, CRE if not enough memory for 
+* Error Conditions: CRE if segments is null, CRE if not enough memory for
 *                   segment to be duplicated
 */
 void loadp(Seq_T segments, uint32_t rB)
 {
     assert(segments != NULL);
     Seq_T segB = Seq_get(segments, rB);
-    
+
     Seq_T duplicate = Seq_new(Seq_length(segB));
     assert(duplicate != NULL);
 
@@ -329,7 +329,7 @@ void loadp(Seq_T segments, uint32_t rB)
 
 /*
 * Name: execute
-* Summary: execute is responsible for calling the appropriate 
+* Summary: execute is responsible for calling the appropriate
 *          functions in response to different opcodes. it is
 *          just a large switch statement that passes the appropriate
 *          registers and parameters to the applicable function.
@@ -337,7 +337,7 @@ void loadp(Seq_T segments, uint32_t rB)
 *        current opcode and registers, segments is the sequence of segments,
 *        ids is the sequence of previously unmapped segment identifiers that
 *        can be reused, registers is a pointer to the 32 bit registers 0-7,
-*        and counter is a pointer to the program counter. 
+*        and counter is a pointer to the program counter.
 * Output: N/A
 * Side Effects: side effects of called function.
 * Error Conditions: error conditions of called funciton.
@@ -373,7 +373,7 @@ void execute(Instruction instruction, Seq_T segments, Seq_T ids,
                 break;
 
         case DIV:
-            division(&registers[instruction -> rA], 
+            division(&registers[instruction -> rA],
                     registers[instruction -> rB],
                     registers[instruction -> rC]);
                 break;
@@ -463,20 +463,47 @@ void um(Seq_T seg0)
 
         uint32_t word = (uint32_t) (uintptr_t) Seq_get(Seq_get(segments, 0),
                                                        counter);
-        Instruction instructions = unpack(word);
+        Instruction instruction;
+        NEW(instruction);
 
-        if (instructions -> opcode == HALT) {
-            FREE(instructions);
+        /* unpack in place */
+        uint32_t opcode = word >> 28;
+        instruction -> opcode = opcode;
+
+        if(opcode == LV) {
+          uint32_t wordrA = word;
+          uint32_t wordVal = word;
+          instruction -> value = (wordrA << 7) >> 7;
+          instruction -> rA = (wordVal << 4) >> 29;
+          instruction -> rB = 0;
+          instruction -> rC = 0;
+        } else {
+          uint32_t wordrA = word;
+          uint32_t wordrB = word;
+          uint32_t wordrC = word;
+          instruction -> rA = (wordrA << 23)  >> 29;
+          instruction -> rB = (wordrB << 26)  >> 29;
+          instruction -> rC = (wordrC << 29)  >> 29;
+          instruction -> value = 0;
+        }
+
+        //(word << (64 - (lsb + width)))  >> (64 - width)//shl
+
+      //  printf("op: %d, rA: %d, rB: %d, rC: %d, value: %d\n",   instruction -> opcode,   instruction -> rA, instruction->rB, instruction->rC, instruction->value);
+
+
+        if (instruction -> opcode == HALT) {
+            FREE(instruction);
             break;
         }
 
-        execute(instructions, segments, ids, registers, &counter);
+        execute(instruction, segments, ids, registers, &counter);
 
-        if (instructions -> opcode != LOADP) {
+        if (instruction -> opcode != LOADP) {
             counter++;
         }
 
-        FREE(instructions);
+        FREE(instruction);
     }
 
     free(registers);
