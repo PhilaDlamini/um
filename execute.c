@@ -11,7 +11,6 @@
 */
 
 #include "execute.h"
-#include "unpack.h"
 #include "assert.h"
 #include "execute.h"
 #include <mem.h>
@@ -327,6 +326,8 @@ void loadp(Seq_T segments, uint32_t rB)
 }
 
 
+
+// execute(value, rA, rB, rC, opcode, segments, ids, registers, &counter);
 /*
 * Name: execute
 * Summary: execute is responsible for calling the appropriate
@@ -342,45 +343,44 @@ void loadp(Seq_T segments, uint32_t rB)
 * Side Effects: side effects of called function.
 * Error Conditions: error conditions of called funciton.
 */
-void execute(Instruction instruction, Seq_T segments, Seq_T ids,
+void execute(uint32_t value, uint32_t rA, uint32_t rB, uint32_t rC, uint32_t opcode, Seq_T segments, Seq_T ids,
             uint32_t *registers, int *counter)
 {
 
-    uint32_t opcode = instruction -> opcode;
     switch(opcode) {
         case CMOV:
-            cmov(&registers[instruction -> rA], registers[instruction -> rB],
-                registers[instruction -> rC]);
+            cmov(&registers[rA], registers[rB],
+                registers[rC]);
             break;
         case SLOAD:
-            sload(segments, &registers[instruction -> rA],
-                registers[instruction -> rB],
-                registers[instruction -> rC]);
+            sload(segments, &registers[rA],
+                registers[rB],
+                registers[rC]);
             break;
         case SSTORE:
-            sstore(segments, registers[instruction -> rA],
-                registers[instruction -> rB],
-                registers[instruction -> rC] );
+            sstore(segments, registers[rA],
+                registers[rB],
+                registers[rC] );
             break;
         case ADD:
 
-            add(&registers[instruction -> rA], registers[instruction -> rB],
-                registers[instruction -> rC]);
+            add(&registers[rA], registers[rB],
+                registers[rC]);
             break;
         case MUL:
-            mult(&registers[instruction -> rA], registers[instruction -> rB],
-                    registers[instruction -> rC]);
+            mult(&registers[rA], registers[rB],
+                    registers[rC]);
                 break;
 
         case DIV:
-            division(&registers[instruction -> rA],
-                    registers[instruction -> rB],
-                    registers[instruction -> rC]);
+            division(&registers[rA],
+                    registers[rB],
+                    registers[rC]);
                 break;
 
         case NAND:
-            nand(&registers[instruction -> rA], registers[instruction -> rB],
-                registers[instruction -> rC]);
+            nand(&registers[rA], registers[rB],
+                registers[rC]);
             break;
         case ACTIVATE:
         {
@@ -388,34 +388,34 @@ void execute(Instruction instruction, Seq_T segments, Seq_T ids,
                     ? (uint32_t) Seq_length(segments)
                     : (uint32_t) (uintptr_t) Seq_remlo(ids);
 
-            map(new_id, segments, &registers[instruction -> rB],
-                registers[instruction -> rC]);
+            map(new_id, segments, &registers[rB],
+                registers[rC]);
             break;
         }
         case INACTIVATE:
         {
-            unmap(ids, segments, registers[instruction -> rC]);
+            unmap(ids, segments, registers[rC]);
 
         }
             break;
         case OUT:
         {
-            int value = registers[instruction -> rC];
+            int value = registers[rC];
             output(value);
             break;
         }
         case IN:
-            in(&registers[instruction -> rC]);
+            in(&registers[rC]);
             break;
         case LOADP:
 
-            if (registers[instruction -> rB] != 0) {
-                loadp(segments, registers[instruction -> rB]);
+            if (registers[rB] != 0) {
+                loadp(segments, registers[rB]);
             }
-            *counter = registers[instruction -> rC];
+            *counter = registers[rC];
             break;
         case LV:
-            load_value(instruction -> value, &registers[instruction -> rA]);
+            load_value(value, &registers[rA]);
             break;
     }
 
@@ -459,51 +459,46 @@ void um(Seq_T seg0)
     }
 
     int counter = 0;
+
+    uint32_t word, opcode, rA, rB, rC, value, wordrA, wordrB, wordrC, wordVal;
+
+
     while (counter < Seq_length(Seq_get(segments, 0))) {
 
-        uint32_t word = (uint32_t) (uintptr_t) Seq_get(Seq_get(segments, 0),
+        word = (uint32_t) (uintptr_t) Seq_get(Seq_get(segments, 0),
                                                        counter);
-        Instruction instruction;
-        NEW(instruction);
+
+        wordrA = wordrB = wordrC = wordVal = word;
 
         /* unpack in place */
-        uint32_t opcode = word >> 28;
-        instruction -> opcode = opcode;
+        opcode = word >> 28;
 
         if(opcode == LV) {
-          uint32_t wordrA = word;
-          uint32_t wordVal = word;
-          instruction -> value = (wordrA << 7) >> 7;
-          instruction -> rA = (wordVal << 4) >> 29;
-          instruction -> rB = 0;
-          instruction -> rC = 0;
+          value = (wordrA << 7) >> 7;
+          rA = (wordVal << 4) >> 29;
+          rB = 0;
+          rC = 0;
         } else {
-          uint32_t wordrA = word;
-          uint32_t wordrB = word;
-          uint32_t wordrC = word;
-          instruction -> rA = (wordrA << 23)  >> 29;
-          instruction -> rB = (wordrB << 26)  >> 29;
-          instruction -> rC = (wordrC << 29)  >> 29;
-          instruction -> value = 0;
+          rA = (wordrA << 23)  >> 29;
+          rB = (wordrB << 26)  >> 29;
+          rC = (wordrC << 29)  >> 29;
+          value = 0;
         }
 
         //(word << (64 - (lsb + width)))  >> (64 - width)//shl
 
       //  printf("op: %d, rA: %d, rB: %d, rC: %d, value: %d\n",   instruction -> opcode,   instruction -> rA, instruction->rB, instruction->rC, instruction->value);
 
-
-        if (instruction -> opcode == HALT) {
-            FREE(instruction);
+        if (opcode == HALT) {
             break;
         }
 
-        execute(instruction, segments, ids, registers, &counter);
+        execute(value, rA, rB, rC, opcode, segments, ids, registers, &counter);
 
-        if (instruction -> opcode != LOADP) {
+        if (opcode != LOADP) {
             counter++;
         }
 
-        FREE(instruction);
     }
 
     free(registers);

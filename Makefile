@@ -11,7 +11,7 @@ LDLIBS  = -lcii40-O2 -l40locality -lm -lbitpack -lum-dis -lcii
 
 all: um
 
-um: um.o um_reader.o execute.o unpack.o
+um: um.o um_reader.o execute.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 # To get *any* .o file, compile its .c file with the following rule.
