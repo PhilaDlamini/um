@@ -349,73 +349,123 @@ void execute(uint32_t value, uint32_t rA, uint32_t rB, uint32_t rC, uint32_t opc
 
     switch(opcode) {
         case CMOV:
-            cmov(&registers[rA], registers[rB],
-                registers[rC]);
+        {
+            if (registers[rC] != 0) {
+                registers[rA] = registers[rB];
+            }
             break;
+        }
         case SLOAD:
-            sload(segments, &registers[rA],
-                registers[rB],
-                registers[rC]);
-            break;
+          {
+              Seq_T curr = (Seq_T) Seq_get(segments, registers[rB]);
+              uint32_t value = (uint32_t) (uintptr_t) Seq_get(curr, registers[rC]);
+              registers[rA] = value;
+              break;
+          }
         case SSTORE:
-            sstore(segments, registers[rA],
-                registers[rB],
-                registers[rC] );
-            break;
+        {
+          Seq_T curr = (Seq_T) Seq_get(segments, registers[rA]);
+          Seq_put(curr, registers[rB], (void*) (uintptr_t) registers[rC]);
+          break;
+        }
         case ADD:
-
-            add(&registers[rA], registers[rB],
-                registers[rC]);
-            break;
+        {
+          registers[rA] = registers[rB] + registers[rC];
+          break;
+        }
         case MUL:
-            mult(&registers[rA], registers[rB],
-                    registers[rC]);
-                break;
-
+          {
+            registers[rA] = registers[rB] * registers[rC];
+            break;
+          }
         case DIV:
-            division(&registers[rA],
-                    registers[rB],
-                    registers[rC]);
-                break;
+          {
+            assert(registers[rC] != 0);
+            registers[rA] = registers[rB] / registers[rC];
+            break;
+          }
 
         case NAND:
-            nand(&registers[rA], registers[rB],
-                registers[rC]);
+            {
+              registers[rA] = ~(registers[rB] & registers[rC]);
             break;
+          }
         case ACTIVATE:
         {
+            assert(registers[rC] != 0);
             uint32_t new_id = Seq_length(ids) == 0
                     ? (uint32_t) Seq_length(segments)
                     : (uint32_t) (uintptr_t) Seq_remlo(ids);
 
-            map(new_id, segments, &registers[rB],
-                registers[rC]);
+            Seq_T new_map = Seq_new(registers[rC]);
+            assert(new_map != NULL);
+
+                //Initialize the segment with 0s
+            for (uint32_t i = 0; i < registers[rC]; i++) {
+                  Seq_addhi(new_map, (void*) (uintptr_t) 0);
+            }
+
+            if (new_id < (uint32_t) Seq_length(segments)) {
+                  Seq_put(segments, new_id, new_map);
+            } else {
+                Seq_addhi(segments, new_map);
+            }
+
+              registers[rB] = new_id;
             break;
         }
         case INACTIVATE:
         {
-            unmap(ids, segments, registers[rC]);
+            //Save the unmapped id
+            Seq_addhi(ids, (void *) (uintptr_t) registers[rC]);
 
-        }
+            //Unmap (will seg fault if rC is unmapped already)
+            Seq_T to_remove = (Seq_T) Seq_get(segments, registers[rC]);
+            Seq_free(&to_remove);
+            Seq_put(segments, registers[rC], NULL);
             break;
+        }
         case OUT:
         {
-            int value = registers[rC];
-            output(value);
+            assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
+            printf("%c", (int) registers[rC]);
             break;
         }
         case IN:
-            in(&registers[rC]);
-            break;
+          {
+              char c = getc(stdin);
+              if (c != EOF) {
+                  registers[rC] =  c;
+              } else {
+                  registers[rC] = ~0;
+              }
+              break;
+          }
         case LOADP:
-
+        {
             if (registers[rB] != 0) {
-                loadp(segments, registers[rB]);
+              Seq_T segB = Seq_get(segments, registers[rB]);
+
+              Seq_T duplicate = Seq_new(Seq_length(segB));
+              assert(duplicate != NULL);
+
+              //Duplicate segment
+              for(int i = 0; i < Seq_length(segB); i++) {
+                  Seq_addhi(duplicate, Seq_get(segB, i));
+              }
+
+              //Free segment 0
+              Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
+              Seq_free(&seg0);
+
+              // loads duplicated segment to be the new segment 0
+              Seq_put(segments, 0, duplicate);
             }
             *counter = registers[rC];
             break;
+        }
         case LV:
-            load_value(value, &registers[rA]);
+            registers[rA] = value;
             break;
     }
 
@@ -493,7 +543,128 @@ void um(Seq_T seg0)
             break;
         }
 
-        execute(value, rA, rB, rC, opcode, segments, ids, registers, &counter);
+        //execute(value, rA, rB, rC, opcode, segments, ids, registers, &counter);
+        switch(opcode) {
+            case CMOV:
+            {
+                if (registers[rC] != 0) {
+                    registers[rA] = registers[rB];
+                }
+                break;
+            }
+            case SLOAD:
+              {
+                  Seq_T curr = (Seq_T) Seq_get(segments, registers[rB]);
+                  uint32_t value = (uint32_t) (uintptr_t) Seq_get(curr, registers[rC]);
+                  registers[rA] = value;
+                  break;
+              }
+            case SSTORE:
+            {
+              Seq_T curr = (Seq_T) Seq_get(segments, registers[rA]);
+              Seq_put(curr, registers[rB], (void*) (uintptr_t) registers[rC]);
+              break;
+            }
+            case ADD:
+            {
+              registers[rA] = registers[rB] + registers[rC];
+              break;
+            }
+            case MUL:
+              {
+                registers[rA] = registers[rB] * registers[rC];
+                break;
+              }
+            case DIV:
+              {
+                assert(registers[rC] != 0);
+                registers[rA] = registers[rB] / registers[rC];
+                break;
+              }
+
+            case NAND:
+                {
+                  registers[rA] = ~(registers[rB] & registers[rC]);
+                break;
+              }
+            case ACTIVATE:
+            {
+                assert(registers[rC] != 0);
+                uint32_t new_id = Seq_length(ids) == 0
+                        ? (uint32_t) Seq_length(segments)
+                        : (uint32_t) (uintptr_t) Seq_remlo(ids);
+
+                Seq_T new_map = Seq_new(registers[rC]);
+                assert(new_map != NULL);
+
+                    //Initialize the segment with 0s
+                for (uint32_t i = 0; i < registers[rC]; i++) {
+                      Seq_addhi(new_map, (void*) (uintptr_t) 0);
+                }
+
+                if (new_id < (uint32_t) Seq_length(segments)) {
+                      Seq_put(segments, new_id, new_map);
+                } else {
+                    Seq_addhi(segments, new_map);
+                }
+
+                  registers[rB] = new_id;
+                break;
+            }
+            case INACTIVATE:
+            {
+                //Save the unmapped id
+                Seq_addhi(ids, (void *) (uintptr_t) registers[rC]);
+
+                //Unmap (will seg fault if rC is unmapped already)
+                Seq_T to_remove = (Seq_T) Seq_get(segments, registers[rC]);
+                Seq_free(&to_remove);
+                Seq_put(segments, registers[rC], NULL);
+                break;
+            }
+            case OUT:
+            {
+                assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
+                printf("%c", (int) registers[rC]);
+                break;
+            }
+            case IN:
+              {
+                  char c = getc(stdin);
+                  if (c != EOF) {
+                      registers[rC] =  c;
+                  } else {
+                      registers[rC] = ~0;
+                  }
+                  break;
+              }
+            case LOADP:
+            {
+                if (registers[rB] != 0) {
+                  Seq_T segB = Seq_get(segments, registers[rB]);
+
+                  Seq_T duplicate = Seq_new(Seq_length(segB));
+                  assert(duplicate != NULL);
+
+                  //Duplicate segment
+                  for(int i = 0; i < Seq_length(segB); i++) {
+                      Seq_addhi(duplicate, Seq_get(segB, i));
+                  }
+
+                  //Free segment 0
+                  Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
+                  Seq_free(&seg0);
+
+                  // loads duplicated segment to be the new segment 0
+                  Seq_put(segments, 0, duplicate);
+                }
+                counter = registers[rC];
+                break;
+            }
+            case LV:
+                registers[rA] = value;
+                break;
+        }
 
         if (opcode != LOADP) {
             counter++;
