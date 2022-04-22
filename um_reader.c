@@ -32,26 +32,22 @@ const int lsb = 24;
 uint32_t *reader(FILE *fp, int bytes)
 {
     int curr_instruction = 0;
-    int num_instructions = bytes / num_chars;
+    int num_instructions = bytes / 4;
     uint32_t *seg0 = malloc(num_instructions * sizeof(*seg0));
 
-    //fprintf(stderr, "%p \n", seg0);
+
     assert(seg0 != NULL);
     uint32_t word;
     while (curr_instruction < num_instructions) {
         word = 0;
-        for (int i = 0; i < num_chars; i++) {
+        for (int i = 0; i < 4; i++) {
             unsigned char c = getc(fp);
-            word = Bitpack_newu(word, bits, lsb - (i * bits), c);
+            word = Bitpack_newu(word, 8, 24 - (i * 8), c);
         }
         seg0[curr_instruction++] = word;
-        //Seq_addhi(seg0, (void *)(uintptr_t) word);
+        
     }
 
-    // //Iterate and print words
-    // for(int i = 0; i< num_instructions; i++) {
-    //   printf("%x\n", seg0[i]);
-    // }
 
 
 

@@ -11,8 +11,8 @@ LDLIBS  = -lcii40-O2 -l40locality -lm -lbitpack -lum-dis -lcii
 
 all: um lab
 
-um: um.o um_reader.o execute.o
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+um: um.o
+		$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 lab: umlab.o umlabwrite.o
 		$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)

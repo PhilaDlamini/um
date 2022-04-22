@@ -1,14 +1,4 @@
-/*
-*                       execute.c
-*
-*
-*   Summary: execute.c is the implementation for execute.h. it holds all the
-*            individual functinos for all the opcodes. execute is responsible
-*            for iterating through segment 0, unpacking, and executing the
-*            instructions.
-*
-*   Authors: vmccab01 and pdlami01
-*/
+
 
 #include "execute.h"
 #include "assert.h"
@@ -20,34 +10,8 @@
 const int hint = 16;
 
 
-/*
-* Name: free_sequences
-* Summary: free sequences is a helper funciton that frees the memory of the
-*          given sequences: segments and ids.
-* Input: segments is the sequence that holds all of the program's segments and
-*        ids holds the unmapped segment identifiers. both are expected to be
-*         valid non NULL Seq_T.
-* Output: N/A
-* Side Effects: permenantly frees memory allocated for the segments and ids.
-* Error Conditions: CRE if segments is NULL, CRE if ids is NULL
-*/
-// void free_sequences(Seq_T segments, Seq_T ids)
-// {
-//     assert(segments != NULL && ids != NULL);
-//     int len = Seq_length(segments);
-//     for (int i = len - 1; i >= 0; i--) {
-//         Seq_T curr = (Seq_T) Seq_get(segments, i);
-//         if (curr != NULL) {
-//             Seq_free(&curr);
-//         }
-//     }
-//     Seq_free(&segments);
-//     Seq_free(&ids);
-// }
-
 void um(uint32_t *seg0, int count)
 {
-
     uint32_t *registers = malloc(8 * sizeof(uint32_t));
     assert(registers != NULL);
 
@@ -93,10 +57,6 @@ void um(uint32_t *seg0, int count)
           value = 0;
         }
 
-        //(word << (64 - (lsb + width)))  >> (64 - width)//shl
-
-      //  printf("op: %d, rA: %d, rB: %d, rC: %d, value: %d\n",   instruction -> opcode,   instruction -> rA, instruction->rB, instruction->rC, instruction->value);
-
         if (opcode == HALT) {
             break;
         }
@@ -105,7 +65,7 @@ void um(uint32_t *seg0, int count)
         switch(opcode) {
             case CMOV:
             {
-                if (registers[rC] != 0) {
+                if (registers[rC] != 0) {um(seg0, buf.st_size / 4);
                   registers[rA] = registers[rB];
                 }
                 break;
@@ -147,17 +107,14 @@ void um(uint32_t *seg0, int count)
               }
             case ACTIVATE:
             {
-              //  assert(registers[rC] != 0);
-
                 //If surpassed load factor
                 if((float)size / capacity >= 0.7) {
-
-                  // printf("About to expand spine\n");
-                  // printf("Old cap: %d, old size: %d\n", capacity, size);
-
                   capacity = 2 * capacity + 2;
                   uint32_t **temp1= malloc(capacity * sizeof(*temp1));
                   uint32_t *temp2 = malloc(capacity * sizeof(*temp2));
+
+                  assert(temp1 != NULL && temp2 != NULL);
+
                   for(int i = 0; i < size; i++) {
                     temp1[i] = spine[i];
                     temp2[i] = segment_sizes[i];
@@ -165,18 +122,15 @@ void um(uint32_t *seg0, int count)
 
                   free(spine);
                   free(segment_sizes);
-
                   spine = temp1;
                   segment_sizes = temp2;
 
-                  //printf("new cap: %d, new size: %d\n", capacity, size);
                 }
 
                 //Assign index
                 int index = -1;
 
                 if(ids_s > 0) {
-                 // printf("Re using index\n");
                   index = ids[--ids_s];
                 } else {
                   index = size++;
@@ -184,6 +138,7 @@ void um(uint32_t *seg0, int count)
 
                 //Initialize and insert the new segment
                 uint32_t *segment = malloc(registers[rC] * sizeof(*segment));
+                assert(segment != NULL);
                 for(int i = 0; i < (int) registers[rC]; i++)
                   segment[i] = 0;
 
@@ -200,6 +155,7 @@ void um(uint32_t *seg0, int count)
                 if((float)ids_s / ids_cap >= 0.7) {
                   ids_cap = 2 * ids_cap + 2;
                   uint32_t *temp = malloc(ids_cap * sizeof(*temp));
+                  assert(temp != NULL);
                   for(int i = 0; i < ids_s; i++)
                     temp[i] = ids[i];
 
@@ -218,7 +174,6 @@ void um(uint32_t *seg0, int count)
             case OUT:
             {
                 assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
-               // printf("id assigned %d\n", (int) registers[rC]);
                 printf("%c", (int) registers[rC]);
                 break;
             }
@@ -236,7 +191,6 @@ void um(uint32_t *seg0, int count)
             {
                 if (registers[rB] != 0) {
                   uint32_t *segment = spine[registers[rB]];
-                  //uint32_t *duplicate = sizeof(segment)/sizeof(uint32_t);
                   int dup_size = segment_sizes[registers[rB]];
                   uint32_t *duplicate = malloc(dup_size * sizeof(*duplicate));
                   assert(duplicate != NULL);
@@ -249,23 +203,6 @@ void um(uint32_t *seg0, int count)
                   free(segment0);
                   spine[0] = duplicate;
                   segment_sizes[0] = segment_sizes[registers[rB]];
-
-              //    Seq_T segB = Seq_get(segments, registers[rB]);
-
-                  // Seq_T duplicate = Seq_new(Seq_length(segB));
-                  // assert(duplicate != NULL);
-                  //
-                  // //Duplicate segment
-                  // for(int i = 0; i < Seq_length(segB); i++) {
-                  //     Seq_addhi(duplicate, Seq_get(segB, i));
-                  // }
-                  //
-                  // //Free segment 0
-                  // Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
-                  // Seq_free(&seg0);
-                  //
-                  // // loads duplicated segment to be the new segment 0
-                  // Seq_put(segments, 0, duplicate);
                 }
                 counter = registers[rC];
                 break;
@@ -282,7 +219,6 @@ void um(uint32_t *seg0, int count)
     }
 
     free(registers);
-    //free_sequences(segments, ids); //
 
     //Free everything
     for(int i = 0; i < size; i++){
