@@ -33,7 +33,7 @@ uint32_t *reader(FILE *fp, int bytes)
 {
     int curr_instruction = 0;
     int num_instructions = bytes / num_chars;
-    uint32_t *seg0 = malloc(num_instructions * sizeof(int));
+    uint32_t *seg0 = malloc(num_instructions * sizeof(*seg0));
 
     //fprintf(stderr, "%p \n", seg0);
     assert(seg0 != NULL);
