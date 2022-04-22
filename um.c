@@ -1,12 +1,3 @@
-/*
-*                       um.c
-*
-*
-*   Summary: um.c is file that holds our main.
-*
-*   Authors: vmccab01 and pdlami01
-*/
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -15,8 +6,9 @@
 #include <assert.h>
 #include "bitpack.h"
 
-typedef enum Um_opcode { CMOV = 0, SLOAD, SSTORE, ADD, MUL, DIV, NAND, HALT,
-  ACTIVATE, INACTIVATE, OUT, IN, LOADP, LV
+typedef enum Um_opcode {
+    CMOV = 0, SLOAD, SSTORE, ADD, MUL, DIV,
+    NAND, HALT, ACTIVATE, INACTIVATE, OUT, IN, LOADP, LV
 } Um_opcode;
 
 int main(int argc, char *argv[]) {
@@ -32,41 +24,44 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-        //Data structure
-        int ids_s = 0;
-        int size = 1;
-        int ids_cap, capacity;
-        ids_cap = capacity = 10;
-        uint32_t counter = 0;
-        uint32_t word, opcode, rA, rB, rC, value, wordrA, wordrB, wordrC, wordVal;
-        uint32_t **spine = malloc(capacity * sizeof(*spine));
-        uint32_t *segment_sizes = malloc(capacity * sizeof(*segment_sizes));
-        uint32_t *ids = malloc(ids_cap * sizeof(*ids));
-        assert(ids != NULL && spine != NULL);
-
-        //registers
-        uint32_t *registers = malloc(8 * sizeof(uint32_t));
-        assert(registers != NULL);
-        for (int i = 0; i < 8; i++) registers[i] = 0;
-
-        //Read in instructions
         int curr_instruction = 0;
         int count = buf.st_size / 4;
         uint32_t *seg0 = malloc(count * sizeof(*seg0));
+
+
         assert(seg0 != NULL);
         uint32_t instr;
-
         while (curr_instruction < count) {
             instr = 0;
             for (int i = 0; i < 4; i++) {
                 unsigned char c = getc(fp);
                 instr = Bitpack_newu(instr, 8, 24 - (i * 8), c);
+
             }
             seg0[curr_instruction++] = instr;
 
         }
 
-        //Run program
+        uint32_t *registers = malloc(8 * sizeof(uint32_t));
+        assert(registers != NULL);
+
+        for (int i = 0; i < 8; i++) {
+            registers[i] = 0;
+        }
+
+        uint32_t counter = 0;
+        uint32_t word, opcode, rA, rB, rC, value, wordrA, wordrB, wordrC, wordVal;
+
+        int ids_s = 0;
+        int size = 1;
+        int ids_cap, capacity;
+        ids_cap = capacity = 10;
+        uint32_t **spine = malloc(capacity * sizeof(*spine));
+        uint32_t *segment_sizes = malloc(capacity * sizeof(*segment_sizes));
+        uint32_t *ids = malloc(ids_cap * sizeof(*ids));
+        assert(ids != NULL && spine != NULL);
+
+        //Put segment 0
         spine[0] = seg0;
         segment_sizes[0] = count;
 
@@ -75,7 +70,6 @@ int main(int argc, char *argv[]) {
             uint32_t *seg0 = spine[0];
             word = seg0[counter];
             wordrA = wordrB = wordrC = wordVal = word;
-
             opcode = word >> 28;
 
             if(opcode == LV) {
@@ -104,21 +98,21 @@ int main(int argc, char *argv[]) {
                 }
                 case SLOAD:
                   {
-                    uint32_t *segment = spine[registers[rB]];
-                    uint32_t value = segment[registers[rC]];
-                    registers[rA] = value;
-                    break;
+                      uint32_t *segment = spine[registers[rB]];
+                      uint32_t value = segment[registers[rC]];
+                      registers[rA] = value;
+                      break;
                   }
                 case SSTORE:
                 {
-                    uint32_t *segment = spine[registers[rA]];
-                    segment[registers[rB]] = registers[rC];
-                    break;
+                  uint32_t *segment = spine[registers[rA]];
+                  segment[registers[rB]] = registers[rC];
+                  break;
                 }
                 case ADD:
                 {
-                    registers[rA] = registers[rB] + registers[rC];
-                    break;
+                  registers[rA] = registers[rB] + registers[rC];
+                  break;
                 }
                 case MUL:
                   {
@@ -241,16 +235,18 @@ int main(int argc, char *argv[]) {
             if (opcode != LOADP) {
                 counter++;
             }
+
         }
 
+        free(registers);
+
+        //Free everything
         for(int i = 0; i < size; i++){
           if(spine[i] != NULL) free(spine[i]);
         }
-
         free(spine);
         free(ids);
         free(segment_sizes);
-        free(registers);
         fclose(fp);
 
         return EXIT_SUCCESS;
