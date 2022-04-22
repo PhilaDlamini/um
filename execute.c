@@ -31,475 +31,22 @@ const int hint = 16;
 * Side Effects: permenantly frees memory allocated for the segments and ids.
 * Error Conditions: CRE if segments is NULL, CRE if ids is NULL
 */
-void free_sequences(Seq_T segments, Seq_T ids)
+// void free_sequences(Seq_T segments, Seq_T ids)
+// {
+//     assert(segments != NULL && ids != NULL);
+//     int len = Seq_length(segments);
+//     for (int i = len - 1; i >= 0; i--) {
+//         Seq_T curr = (Seq_T) Seq_get(segments, i);
+//         if (curr != NULL) {
+//             Seq_free(&curr);
+//         }
+//     }
+//     Seq_free(&segments);
+//     Seq_free(&ids);
+// }
+
+void um(uint32_t *seg0, int count)
 {
-    assert(segments != NULL && ids != NULL);
-    int len = Seq_length(segments);
-    for (int i = len - 1; i >= 0; i--) {
-        Seq_T curr = (Seq_T) Seq_get(segments, i);
-        if (curr != NULL) {
-            Seq_free(&curr);
-        }
-    }
-    Seq_free(&segments);
-    Seq_free(&ids);
-}
-
-/*
-* Name: load_value
-* Summary: load value loads the given value into the given register.
-* Input: value is the desired value to be loaded into a given register, r is
-*        a pointer to the address of the desired register to be updated.
-* Output: N/A
-* Side Effects: register is updated by reference.
-* Error Conditions: N/A
-*/
-void load_value(uint32_t value, uint32_t *r)
-{
-    *r = value;
-}
-
-
-/*
-* Name: Output
-* Summary: ouptut writes the given value to standard output.
-* Input: value is an integer expected to be between 0 and 255.
-* Output: No return value but 'value' is pritned to standard output.
-* Side Effects: N/A
-* Error Conditions: CRE if given value is not between 0 and 255.
-*/
-void output(int value)
-{
-    assert(value >= 0 && value <= 255);
-    printf("%c", value);
-}
-
-/*
-* Name: add
-* Summary: add updates the value at register rA to be equal to rB + rC.
-* Input: add takes in the address of register rA and the values at registers
-*        rB and rC. rA is expected to be a valid non null address.
-* Output: N/A
-* Side Effects: register rA is updated by reference.
-* Error Conditions: CRE if rA is a null pointer.
-*/
-void add(uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(rA != NULL);
-    *rA = rB + rC;
-}
-
-/*
-* Name: mult
-* Summary: mult updates the value at register rA to be equal to the product of
-*          rB and rC
-* Input: rA is the address of register rA, rB is the value at register rB, and
-*        rC is the value at register rC. rA is expected to be a valid non null
-*        address.
-* Output: N/A
-* Side Effects: register rA is updated by reference.
-* Error Conditions: CRE if rA is a null pointer
-*/
-void mult(uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(rA != NULL);
-    *rA = rB * rC;
-}
-
-/*
-* Name: division
-* Summary: division updates the value at register rA to be equal to the value
-*          at register rB divided by the value at register rC.
-* Input: rA is the address of register rA, rB is the value at register rB, and
-*        rC is the value at register rC. rA is expected to be a valid non null
-*        address and rC is expected to be a non zero value.
-* Output: N/A
-* Side Effects: rA is updated by reference.
-* Error Conditions: CRE if user attempts to divide by zero
-*/
-void division(uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(rC != 0);
-    *rA = (rB / rC);
-}
-
-/*
-* Name: cmov
-* Summary: cmov is the funciton for the conditional move operator in which the
-*          value at register rA is to be equal to the value at register rB if
-*          the value at register rC is not zero.
-* Input: rA is the address of register rA, rB is the value at register rB, and
-*        rC is the value at register rC. rA is expected to be a valid non null
-*        address.
-* Output: N/A
-* Side Effects: rA is updated by reference.
-* Error Conditions: CRE if rA is null.
-*/
-void cmov(uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(rA != NULL);
-    if (rC != 0) {
-        *rA = rB;
-    }
-}
-
-/*
-* Name: in
-* Summary: in accepts 1 character from standard input and updates register rC
-*          to be the inputted character. if the input is signalled to be end of
-*          input, rC is populated with a uint32_t of all 1s.
-* Input: rC is the address of register rC. a valid non null register address is
-*        expected.
-* Output: N/A
-* Side Effects: rC is updated by reference.
-* Error Conditions: CRE if rC is NULL.
-*/
-void in(uint32_t *rC)
-{
-    assert(rC != NULL);
-    char c = getc(stdin);
-    if (c != EOF) {
-        *rC =  c;
-    } else {
-        *rC = ~0;
-    }
-}
-
-/*
-* Name: nand
-* Summary: nand is a bitwise NAND function that "ands" the values at registers
-*          rB and rC, "nots" them, then loads the value into register rA.
-* Input: rA is the address of register rA, rB is the value at register rB, and
-*        rC is the value at register rC. rA is expected to be a valid non null
-*        address.
-* Output: N/A
-* Side Effects: rA is updated by reference.
-* Error Conditions: CRE if rA is NULL.
-*/
-void nand(uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(rA != NULL);
-    *rA = ~(rB & rC);
-}
-
-/*
-* Name: map
-* Summary: map() maps a new segment of size rC using the given register id.
-*          the new segment is added to the sequence of segments ('segments')
-*          and the value at register rB is updated to be equal to the id of
-*          the newly mapped segment.
-* Input: new_id is the register id to be used for the newly mapped segment,
-*        segments is the sequence of segments, rB is the address of register
-*        rB, and rC is the value at register rC. new_id is expected to be non 0
-*        and rB is expected to be a valid non null address.
-* Output: N/A - no return value
-* Side Effects: The sequence of segments is permanently updated and register
-*               rB is updated by reference.
-* Error Conditions: CRE if new_id is 0, CRE if no space available for
-*                  Sequence'new_map', CRE if rB is null.
-*/
-void map(uint32_t new_id, Seq_T segments, uint32_t *rB, uint32_t rC)
-{
-
-    assert(new_id != 0 && rB != NULL);
-    Seq_T new_map = Seq_new(rC);
-    assert(new_map != NULL);
-
-    //Initialize the segment with 0s
-    for (uint32_t i = 0; i < rC; i++) {
-        Seq_addhi(new_map, (void*) (uintptr_t) 0);
-    }
-
-    if (new_id < (uint32_t) Seq_length(segments)) {
-        Seq_put(segments, new_id, new_map);
-    } else {
-        Seq_addhi(segments, new_map);
-
-    }
-
-    *rB = new_id;
-
-}
-
-/*
-* Name: unmap
-* Summary: unmap frees the segment with identifier rC from the sequence
-*          of segments. the identifier rC is added to the sequence of
-*          identifiers that can be reused.
-* Input: ids is the sequence of reusable segment ids, segments is the sequence
-*        of segments, and rC is the value at register rC. ids and segments are
-*        expected to be non null and rC is expected to be a non zero value.
-* Output: N/A
-* Side Effects: permenantly frees the memory allocated for the unmapped segment
-*               and the ids sequence is updated to include the unmapped segment
-*               identifier.
-* Error Conditions: CRE if rC is 0 (user attempts to unmap segment 0), CRE if
-*                   rC points to a segment that has not been mapped, CRE if ids
-*                   or segments are null.
-*/
-void unmap(Seq_T ids, Seq_T segments, uint32_t rC)
-{
-    assert(rC != 0 && ids != NULL && segments != NULL);
-    assert(rC < (uint32_t) Seq_length(segments));
-
-    //Save the unmapped id
-    Seq_addhi(ids, (void *) (uintptr_t) rC);
-
-    //Unmap (will seg fault if rC is unmapped already)
-    Seq_T to_remove = (Seq_T) Seq_get(segments, rC);
-    Seq_free(&to_remove);
-    Seq_put(segments, rC, NULL);
-
-}
-
-/*
-* Name: sload
-* Summary: sload is the function for the segmented load opcode. sload sets
-*          the value at register rA equal to the value at segment with
-*          identifier rB at index rC.
-* Input: segments is the sequence of segments, rA is the address of register
-*        rA, rB is the value in register rB, and rC is the value in register
-*        rC. segments is expected to be non null and rA is expected to be a
-*        valid non null adress.
-* Output: N/A
-* Side Effects: register rA is updated by reference.
-* Error Conditions: CRE if segments is null, CRE if rA is null.
-*/
-
-void sload(Seq_T segments, uint32_t *rA, uint32_t rB, uint32_t rC)
-{
-    assert(segments != NULL && rA != NULL);
-    Seq_T curr = (Seq_T) Seq_get(segments, rB);
-    uint32_t value = (uint32_t) (uintptr_t) Seq_get(curr, rC);
-    *rA = value;
-}
-
-/*
-* Name: sstore
-* Summary: sstore is the function for the segmented store opcode. sstore stores
-*          the value from register rA into the segment with identifier rB at
-*          index rC.
-* Input: segments is the sequence of segments, rA is the value at register rA,
-*        rB is the value at register rB, and rC is the value at register rC.
-* Output: N/A
-* Side Effects: segment with identifier rB is updated at index rC.
-* Error Conditions: CRE if segments is NULL.
-*/
-void sstore(Seq_T segments, uint32_t rA, uint32_t rB, uint32_t rC)
-{
-    assert(segments != NULL);
-    Seq_T curr = (Seq_T) Seq_get(segments, rA);
-    Seq_put(curr, rB, (void*) (uintptr_t) rC);
-}
-
-/*
-* Name: loadp
-* Summary: loadp duplicates the desired segment, frees the existing segment 0,
-*          and loads the duplicated segment into segment 0. rB is the
-*          identifier of the segment the user wants to duplicate.
-* Input: segments is the sequence of segments, rB is the value at register rB.
-* Output: N/A.
-* Side Effects: memory of existing segment 0 is freed, segments is updated to
-*               have the duplicated segment at index 0 (new segment 0)
-* Error Conditions: CRE if segments is null, CRE if not enough memory for
-*                   segment to be duplicated
-*/
-void loadp(Seq_T segments, uint32_t rB)
-{
-    assert(segments != NULL);
-    Seq_T segB = Seq_get(segments, rB);
-
-    Seq_T duplicate = Seq_new(Seq_length(segB));
-    assert(duplicate != NULL);
-
-    //Duplicate segment
-    for(int i = 0; i < Seq_length(segB); i++) {
-        Seq_addhi(duplicate, Seq_get(segB, i));
-    }
-
-    //Free segment 0
-    Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
-    Seq_free(&seg0);
-
-    // loads duplicated segment to be the new segment 0
-    Seq_put(segments, 0, duplicate);
-}
-
-
-
-// execute(value, rA, rB, rC, opcode, segments, ids, registers, &counter);
-/*
-* Name: execute
-* Summary: execute is responsible for calling the appropriate
-*          functions in response to different opcodes. it is
-*          just a large switch statement that passes the appropriate
-*          registers and parameters to the applicable function.
-* Input: intruction is an instance of the Instruction struct that holds the
-*        current opcode and registers, segments is the sequence of segments,
-*        ids is the sequence of previously unmapped segment identifiers that
-*        can be reused, registers is a pointer to the 32 bit registers 0-7,
-*        and counter is a pointer to the program counter.
-* Output: N/A
-* Side Effects: side effects of called function.
-* Error Conditions: error conditions of called funciton.
-*/
-void execute(uint32_t value, uint32_t rA, uint32_t rB, uint32_t rC, uint32_t opcode, Seq_T segments, Seq_T ids,
-            uint32_t *registers, int *counter)
-{
-
-    switch(opcode) {
-        case CMOV:
-        {
-            if (registers[rC] != 0) {
-                registers[rA] = registers[rB];
-            }
-            break;
-        }
-        case SLOAD:
-          {
-              Seq_T curr = (Seq_T) Seq_get(segments, registers[rB]);
-              uint32_t value = (uint32_t) (uintptr_t) Seq_get(curr, registers[rC]);
-              registers[rA] = value;
-              break;
-          }
-        case SSTORE:
-        {
-          Seq_T curr = (Seq_T) Seq_get(segments, registers[rA]);
-          Seq_put(curr, registers[rB], (void*) (uintptr_t) registers[rC]);
-          break;
-        }
-        case ADD:
-        {
-          registers[rA] = registers[rB] + registers[rC];
-          break;
-        }
-        case MUL:
-          {
-            registers[rA] = registers[rB] * registers[rC];
-            break;
-          }
-        case DIV:
-          {
-            assert(registers[rC] != 0);
-            registers[rA] = registers[rB] / registers[rC];
-            break;
-          }
-
-        case NAND:
-            {
-              registers[rA] = ~(registers[rB] & registers[rC]);
-            break;
-          }
-        case ACTIVATE:
-        {
-            assert(registers[rC] != 0);
-            uint32_t new_id = Seq_length(ids) == 0
-                    ? (uint32_t) Seq_length(segments)
-                    : (uint32_t) (uintptr_t) Seq_remlo(ids);
-
-            Seq_T new_map = Seq_new(registers[rC]);
-            assert(new_map != NULL);
-
-                //Initialize the segment with 0s
-            for (uint32_t i = 0; i < registers[rC]; i++) {
-                  Seq_addhi(new_map, (void*) (uintptr_t) 0);
-            }
-
-            if (new_id < (uint32_t) Seq_length(segments)) {
-                  Seq_put(segments, new_id, new_map);
-            } else {
-                Seq_addhi(segments, new_map);
-            }
-
-              registers[rB] = new_id;
-            break;
-        }
-        case INACTIVATE:
-        {
-            //Save the unmapped id
-            Seq_addhi(ids, (void *) (uintptr_t) registers[rC]);
-
-            //Unmap (will seg fault if rC is unmapped already)
-            Seq_T to_remove = (Seq_T) Seq_get(segments, registers[rC]);
-            Seq_free(&to_remove);
-            Seq_put(segments, registers[rC], NULL);
-            break;
-        }
-        case OUT:
-        {
-            assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
-            printf("%c", (int) registers[rC]);
-            break;
-        }
-        case IN:
-          {
-              char c = getc(stdin);
-              if (c != EOF) {
-                  registers[rC] =  c;
-              } else {
-                  registers[rC] = ~0;
-              }
-              break;
-          }
-        case LOADP:
-        {
-            if (registers[rB] != 0) {
-              Seq_T segB = Seq_get(segments, registers[rB]);
-
-              Seq_T duplicate = Seq_new(Seq_length(segB));
-              assert(duplicate != NULL);
-
-              //Duplicate segment
-              for(int i = 0; i < Seq_length(segB); i++) {
-                  Seq_addhi(duplicate, Seq_get(segB, i));
-              }
-
-              //Free segment 0
-              Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
-              Seq_free(&seg0);
-
-              // loads duplicated segment to be the new segment 0
-              Seq_put(segments, 0, duplicate);
-            }
-            *counter = registers[rC];
-            break;
-        }
-        case LV:
-            registers[rA] = value;
-            break;
-    }
-
-}
-
-/*
-* Name: um
-* Summary: um is the function called by um.c in main. um takes in the read in
-*          segment 0, unpacks the instruction, and passes the instructions to
-*          execute(). these happen in a while loop that runs while the program
-*          counter is less than the size of segment 0
-* Input: segment 0 (sequence). expected to be a valid non-null Seq_T.
-* Output: N/A
-* Side Effects: Memory allocated for Seq_T 'segments' that holds all segments,
-*               memory allocated and free'd for instances of
-*               Instruction struct, and memory allocated for Sequence
-*               of unmapped identifiers. Function that frees memory for
-*               unmapped identifiers and segments called here.
-*
-* Error Conditions: CRE if seg0 is null. all error conditions of called opcode
-*                   instructions apply.
-*/
-void um(Seq_T seg0)
-{
-    assert(seg0 != NULL);
-
-    Seq_T segments = Seq_new(hint);
-    assert(segments != NULL);
-
-    Seq_addhi(segments, seg0);
-
-    // reusable identifiers
-    Seq_T ids = Seq_new(1);
-    assert(ids != NULL);
 
     uint32_t *registers = malloc(8 * sizeof(uint32_t));
     assert(registers != NULL);
@@ -508,16 +55,27 @@ void um(Seq_T seg0)
         registers[i] = 0;
     }
 
-    int counter = 0;
-
+    uint32_t counter = 0;
     uint32_t word, opcode, rA, rB, rC, value, wordrA, wordrB, wordrC, wordVal;
 
+    int ids_s = 0;
+    int size = 1;
+    int ids_cap, capacity;
+    ids_cap = capacity = 10;
+    uint32_t **spine = malloc(capacity * sizeof(*spine));
+    uint32_t *segment_sizes = malloc(capacity * sizeof(*segment_sizes));
+    uint32_t *ids = malloc(ids_cap * sizeof(*ids));
+    assert(ids != NULL && spine != NULL);
 
-    while (counter < Seq_length(Seq_get(segments, 0))) {
+    //Put segment 0
+    spine[0] = seg0;
+    segment_sizes[0] = count;
 
-        word = (uint32_t) (uintptr_t) Seq_get(Seq_get(segments, 0),
-                                                       counter);
+   // int num_instr = count;
+    while (counter < segment_sizes[0]) {
 
+        uint32_t *seg0 = spine[0];
+        word = seg0[counter];
         wordrA = wordrB = wordrC = wordVal = word;
 
         /* unpack in place */
@@ -548,21 +106,21 @@ void um(Seq_T seg0)
             case CMOV:
             {
                 if (registers[rC] != 0) {
-                    registers[rA] = registers[rB];
+                  registers[rA] = registers[rB];
                 }
                 break;
             }
             case SLOAD:
               {
-                  Seq_T curr = (Seq_T) Seq_get(segments, registers[rB]);
-                  uint32_t value = (uint32_t) (uintptr_t) Seq_get(curr, registers[rC]);
+                  uint32_t *segment = spine[registers[rB]];
+                  uint32_t value = segment[registers[rC]];
                   registers[rA] = value;
                   break;
               }
             case SSTORE:
             {
-              Seq_T curr = (Seq_T) Seq_get(segments, registers[rA]);
-              Seq_put(curr, registers[rB], (void*) (uintptr_t) registers[rC]);
+              uint32_t *segment = spine[registers[rA]];
+              segment[registers[rB]] = registers[rC];
               break;
             }
             case ADD:
@@ -589,42 +147,78 @@ void um(Seq_T seg0)
               }
             case ACTIVATE:
             {
-                assert(registers[rC] != 0);
-                uint32_t new_id = Seq_length(ids) == 0
-                        ? (uint32_t) Seq_length(segments)
-                        : (uint32_t) (uintptr_t) Seq_remlo(ids);
+              //  assert(registers[rC] != 0);
 
-                Seq_T new_map = Seq_new(registers[rC]);
-                assert(new_map != NULL);
+                //If surpassed load factor
+                if((float)size / capacity >= 0.7) {
 
-                    //Initialize the segment with 0s
-                for (uint32_t i = 0; i < registers[rC]; i++) {
-                      Seq_addhi(new_map, (void*) (uintptr_t) 0);
+                  // printf("About to expand spine\n");
+                  // printf("Old cap: %d, old size: %d\n", capacity, size);
+
+                  capacity = 2 * capacity + 2;
+                  uint32_t **temp1= malloc(capacity * sizeof(*temp1));
+                  uint32_t *temp2 = malloc(capacity * sizeof(*temp2));
+                  for(int i = 0; i < size; i++) {
+                    temp1[i] = spine[i];
+                    temp2[i] = segment_sizes[i];
+                  }
+
+                  free(spine);
+                  free(segment_sizes);
+
+                  spine = temp1;
+                  segment_sizes = temp2;
+
+                  //printf("new cap: %d, new size: %d\n", capacity, size);
                 }
 
-                if (new_id < (uint32_t) Seq_length(segments)) {
-                      Seq_put(segments, new_id, new_map);
+                //Assign index
+                int index = -1;
+
+                if(ids_s > 0) {
+                 // printf("Re using index\n");
+                  index = ids[--ids_s];
                 } else {
-                    Seq_addhi(segments, new_map);
+                  index = size++;
                 }
 
-                  registers[rB] = new_id;
+                //Initialize and insert the new segment
+                uint32_t *segment = malloc(registers[rC] * sizeof(*segment));
+                for(int i = 0; i < (int) registers[rC]; i++)
+                  segment[i] = 0;
+
+                segment_sizes[index] = registers[rC];
+                spine[index] = segment;
+                registers[rB] = index;
+
                 break;
             }
             case INACTIVATE:
             {
-                //Save the unmapped id
-                Seq_addhi(ids, (void *) (uintptr_t) registers[rC]);
 
-                //Unmap (will seg fault if rC is unmapped already)
-                Seq_T to_remove = (Seq_T) Seq_get(segments, registers[rC]);
-                Seq_free(&to_remove);
-                Seq_put(segments, registers[rC], NULL);
+              //If surpassed load factor
+                if((float)ids_s / ids_cap >= 0.7) {
+                  ids_cap = 2 * ids_cap + 2;
+                  uint32_t *temp = malloc(ids_cap * sizeof(*temp));
+                  for(int i = 0; i < ids_s; i++)
+                    temp[i] = ids[i];
+
+                  free(ids);
+                  ids = temp;
+                }
+
+                ids[ids_s++] = registers[rC];
+                segment_sizes[registers[rC]] = 0;
+                //free in spine
+                uint32_t *segment = spine[registers[rC]];
+                free(segment);
+                spine[registers[rC]] = NULL;
                 break;
             }
             case OUT:
             {
                 assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
+               // printf("id assigned %d\n", (int) registers[rC]);
                 printf("%c", (int) registers[rC]);
                 break;
             }
@@ -641,22 +235,37 @@ void um(Seq_T seg0)
             case LOADP:
             {
                 if (registers[rB] != 0) {
-                  Seq_T segB = Seq_get(segments, registers[rB]);
-
-                  Seq_T duplicate = Seq_new(Seq_length(segB));
+                  uint32_t *segment = spine[registers[rB]];
+                  //uint32_t *duplicate = sizeof(segment)/sizeof(uint32_t);
+                  int dup_size = segment_sizes[registers[rB]];
+                  uint32_t *duplicate = malloc(dup_size * sizeof(*duplicate));
                   assert(duplicate != NULL);
 
-                  //Duplicate segment
-                  for(int i = 0; i < Seq_length(segB); i++) {
-                      Seq_addhi(duplicate, Seq_get(segB, i));
+                  for(int i = 0; i < dup_size; i++){
+                      duplicate[i] = segment[i];
                   }
 
-                  //Free segment 0
-                  Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
-                  Seq_free(&seg0);
+                  uint32_t *segment0 = spine[0];
+                  free(segment0);
+                  spine[0] = duplicate;
+                  segment_sizes[0] = segment_sizes[registers[rB]];
 
-                  // loads duplicated segment to be the new segment 0
-                  Seq_put(segments, 0, duplicate);
+              //    Seq_T segB = Seq_get(segments, registers[rB]);
+
+                  // Seq_T duplicate = Seq_new(Seq_length(segB));
+                  // assert(duplicate != NULL);
+                  //
+                  // //Duplicate segment
+                  // for(int i = 0; i < Seq_length(segB); i++) {
+                  //     Seq_addhi(duplicate, Seq_get(segB, i));
+                  // }
+                  //
+                  // //Free segment 0
+                  // Seq_T seg0 = (Seq_T) Seq_get(segments, 0);
+                  // Seq_free(&seg0);
+                  //
+                  // // loads duplicated segment to be the new segment 0
+                  // Seq_put(segments, 0, duplicate);
                 }
                 counter = registers[rC];
                 break;
@@ -673,5 +282,13 @@ void um(Seq_T seg0)
     }
 
     free(registers);
-    free_sequences(segments, ids);
+    //free_sequences(segments, ids); //
+
+    //Free everything
+    for(int i = 0; i < size; i++){
+      if(spine[i] != NULL) free(spine[i]);
+    }
+    free(spine);
+    free(ids);
+    free(segment_sizes);
 }

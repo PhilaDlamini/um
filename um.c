@@ -1,7 +1,7 @@
 /*
 *                       um.c
 *
-*   
+*
 *   Summary: um.c is file that holds our main.
 *
 *   Authors: vmccab01 and pdlami01
@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <stdio.h>
 
 
@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Could not open %s\n", argv[1]);
             exit(EXIT_FAILURE);
         }
-        
-        Seq_T seg0 = reader(fp, buf.st_size);
-        um(seg0);
+
+        uint32_t *seg0 = reader(fp, buf.st_size);
+        um(seg0, buf.st_size / 4);
 
         fclose(fp);
         return EXIT_SUCCESS;
     }
-    
+
     fprintf(stderr, "Usage: ./um <program.um> \n");
     exit(EXIT_FAILURE);
 }
