@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
         while (curr_instruction < count) {
             instr = 0;
             for (int i = 0; i < 4; i++) {
-                unsigned char c = getc(fp);
+                unsigned char c = getc_unlocked(fp);
                 instr = Bitpack_newu(instr, 8, 24 - (i * 8), c);
 
             }
@@ -194,12 +194,12 @@ int main(int argc, char *argv[]) {
                 case OUT:
                 {
                     assert((int) registers[rC] >= 0 &&  (int) registers[rC] <= 255);
-                    printf("%c", (int) registers[rC]);
+                    putc_unlocked((int) registers[rC], stdout);
                     break;
                 }
                 case IN:
                   {
-                      char c = getc(stdin);
+                      char c = getc_unlocked(stdin);
                       if (c != EOF) {
                           registers[rC] =  c;
                       } else {
