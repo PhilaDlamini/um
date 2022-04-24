@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         }
 
         uint32_t counter = 0;
-        uint32_t word, opcode, rA, rB, rC, value, wordrA, wordrB, wordrC, wordVal;
+        uint32_t word, opcode, rA, rB, rC, value;
 
         int ids_s = 0;
         int size = 1;
@@ -69,18 +69,17 @@ int main(int argc, char *argv[]) {
 
             uint32_t *seg0 = spine[0];
             word = seg0[counter];
-            wordrA = wordrB = wordrC = wordVal = word;
             opcode = word >> 28;
 
             if(opcode == LV) {
-              value = (wordrA << 7) >> 7;
-              rA = (wordVal << 4) >> 29;
+              value = (word << 7) >> 7;
+              rA = (word << 4) >> 29;
               rB = 0;
               rC = 0;
             } else {
-              rA = (wordrA << 23)  >> 29;
-              rB = (wordrB << 26)  >> 29;
-              rC = (wordrC << 29)  >> 29;
+              rA = (word << 23) >> 29;
+              rB = (word << 26) >> 29;
+              rC = (word << 29) >> 29;
               value = 0;
             }
 
